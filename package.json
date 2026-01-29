@@ -1,0 +1,26 @@
+{
+  "name": "retail-pos-app",
+  "version": "1.0.0",
+  "description": "A comprehensive retail point-of-sale application with inventory management, customer tracking, and analytics",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "start": "python -m http.server 8000"
+  },
+  "keywords": [
+    "pos",
+    "retail",
+    "inventory",
+    "point-of-sale",
+    "javascript",
+    "html",
+    "css"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/retail-pos-app.git"
+  },
+  "homepage": "https://retail-pos-app.vercel.app"
+}

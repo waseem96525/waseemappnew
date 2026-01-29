@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Retail POS - Billing & Inventory Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo"><i class="fas fa-shopping-cart"></i> Retail POS</h1>
+            <nav class="nav">
+                <button class="nav-btn active" data-section="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
+                <button class="nav-btn" data-section="billing"><i class="fas fa-cash-register"></i> Billing</button>
+                <button class="nav-btn" data-section="quickBilling"><i class="fas fa-bolt"></i> Quick Billing</button>
+                <button class="nav-btn" data-section="inventory"><i class="fas fa-boxes"></i> Inventory</button>
+                <button class="nav-btn" data-section="reports"><i class="fas fa-chart-bar"></i> Reports</button>
+                <button class="nav-btn" data-section="customers"><i class="fas fa-users"></i> Customers</button>
+                <button class="nav-btn" data-section="forecast"><i class="fas fa-chart-line"></i> Forecast</button>
+                <button class="nav-btn" data-section="users" id="usersNavBtn" style="display: none;"><i class="fas fa-user-cog"></i> Users</button>
+                <button class="nav-btn" data-section="settings"><i class="fas fa-cog"></i> Settings</button>
+            </nav>
+            <div class="header-controls">
+                <div class="user-info" id="userInfo" style="display: none;">
+                    <span id="currentUserDisplay"></span>
+                    <button id="logoutBtn" class="btn-small btn-secondary">Logout</button>
+                </div>
+                <button id="servicesBtn" class="notification-btn" title="External Services"><i class="fas fa-plug"></i></button>
+                <button id="forecastBtn" class="notification-btn" title="Inventory Forecast"><i class="fas fa-chart-line"></i></button>
+                <button id="themeToggle" class="theme-toggle"><i class="fas fa-moon"></i></button>
+                <button id="notificationBtn" class="notification-btn"><i class="fas fa-bell"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="section active">
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <div class="card-icon"><i class="fas fa-rupee-sign"></i></div>
+                        <div class="card-content">
+                            <h3>Today's Sales</h3>
+                            <div class="metric" id="dashboardTodaySales">₹0.00</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-icon"><i class="fas fa-shopping-cart"></i></div>
+                        <div class="card-content">
+                            <h3>Transactions</h3>
+                            <div class="metric" id="dashboardTransactionCount">0</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-icon"><i class="fas fa-box"></i></div>
+                        <div class="card-content">
+                            <h3>Total Products</h3>
+                            <div class="metric" id="totalProducts">0</div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-icon"><i class="fas fa-users"></i></div>
+                        <div class="card-content">
+                            <h3>Low Stock Items</h3>
+                            <div class="metric" id="lowStockCount">0</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard-charts">
+                    <div class="chart-container">
+                        <h3>Recent Sales</h3>
+                        <canvas id="salesChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Top Categories</h3>
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Billing Section -->
+            <section id="billing" class="section">
+                <div class="billing-container">
+                    <div class="product-selector">
+                        <h3><i class="fas fa-list"></i> Products</h3>
+                        <div class="search-bar">
+                            <input type="text" id="productSearch" placeholder="Search products...">
+                            <select id="categoryFilter">
+                                <option value="">All Categories</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Clothing">Clothing</option>
+                                <option value="Food">Food</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="quick-keys">
+                            <h4><i class="fas fa-keyboard"></i> Quick Keys</h4>
+                            <div class="quick-keys-grid" id="quickKeys"></div>
+                        </div>
+                        <div class="product-list" id="productList"></div>
+                    </div>
+                    
+                    <div class="cart-section">
+                        <div class="cart-header">
+                            <h3>Shopping Cart</h3>
+                            <div class="cart-actions">
+                                <button class="btn-secondary" id="holdCartBtn">Hold Cart</button>
+                                <button class="btn-secondary" id="resumeCartBtn">Resume Cart</button>
+                                <button class="btn-danger" id="clearCartBtn">Clear</button>
+                            </div>
+                        </div>
+                        <div class="cart-items" id="cartItems"></div>
+                        <div class="cart-summary">
+                            <div class="summary-row">
+                                <span>Subtotal:</span>
+                                <span id="subtotal">₹0.00</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Discount:</span>
+                                <span id="discount">₹0.00</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Tax (10%):</span>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span id="tax">₹0.00</span>
+                                    <label style="font-size: 0.9rem; color: #666;">
+                                        <input type="checkbox" id="taxEnabled" checked> Enable Tax
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="summary-row total">
+                                <span>Total:</span>
+                                <span id="total">₹0.00</span>
+                            </div>
+                        </div>
+                        <div class="discount-section">
+                            <div class="discount-type-selector">
+                                <label><input type="radio" name="discountType" value="percentage" checked> Percentage (%)</label>
+                                <label><input type="radio" name="discountType" value="value"> Fixed Amount (₹)</label>
+                            </div>
+                            <div class="discount-input-group">
+                                <input type="text" id="discountCode" placeholder="Discount code (optional)">
+                                <input type="number" id="discountValue" placeholder="0" min="0" step="0.01">
+                                <button class="btn-secondary" id="applyDiscountBtn">Apply</button>
+                            </div>
+                        </div>
+                        <div class="customer-info">
+                            <select id="customerSelect">
+                                <option value="">Select Customer</option>
+                            </select>
+                            <input type="text" id="customerName" placeholder="Customer Name">
+                            <input type="text" id="customerPhone" placeholder="Phone Number">
+                        </div>
+                        <div class="payment-methods">
+                            <label><input type="radio" name="payment" value="cash" checked> Cash</label>
+                            <label><input type="radio" name="payment" value="card"> Card</label>
+                            <label><input type="radio" name="payment" value="upi"> UPI</label>
+                        </div>
+                        <button class="btn-primary" id="checkoutBtn">Checkout</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Billing Section -->
+            <section id="quickBilling" class="section">
+                <div class="quick-billing-container">
+                    <div class="quick-search">
+                        <h2>Quick Billing</h2>
+                        <div class="barcode-search">
+                            <input type="text" id="barcodeInput" placeholder="Enter barcode or product ID..." autofocus>
+                            <button class="btn-primary" id="quickAddBtn">Add</button>
+                        </div>
+                        <div class="held-carts">
+                            <h3>Held Carts</h3>
+                            <div id="heldCartsList"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="quick-cart">
+                        <h3>Current Cart</h3>
+                        <div class="cart-items" id="quickCartItems"></div>
+                        <div class="cart-summary">
+                            <div class="summary-row">
+                                <span>Subtotal:</span>
+                                <span id="quickSubtotal">₹0.00</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Discount:</span>
+                                <span id="quickDiscount">₹0.00</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Tax (10%):</span>
+                                <span id="quickTax">₹0.00</span>
+                            </div>
+                            <div class="summary-row total">
+                                <span>Total:</span>
+                                <span id="quickTotal">₹0.00</span>
+                            </div>
+                        </div>
+                        <div class="quick-payment">
+                            <input type="text" id="quickCustomerName" placeholder="Customer Name">
+                            <div class="payment-methods">
+                                <label><input type="radio" name="quickPayment" value="cash" checked> Cash</label>
+                                <label><input type="radio" name="quickPayment" value="card"> Card</label>
+                                <label><input type="radio" name="quickPayment" value="upi"> UPI</label>
+                            </div>
+                            <button class="btn-primary" id="quickCheckoutBtn">Quick Checkout</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Inventory Section -->
+            <section id="inventory" class="section">
+                <div class="inventory-header">
+                    <h2>Inventory Management</h2>
+                    <button class="btn-primary" id="addProductBtn">Add Product</button>
+                </div>
+                <div class="search-filters">
+                    <input type="text" id="inventorySearch" placeholder="Search inventory...">
+                    <select id="categoryFilter">
+                        <option value="">All Categories</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Clothing">Clothing</option>
+                        <option value="Food">Food</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="inventory-table-container">
+                    <table class="inventory-table" id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Stock</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Reports Section -->
+            <section id="reports" class="section">
+                <div class="reports-header">
+                    <h2><i class="fas fa-chart-bar"></i> Sales Reports</h2>
+                    <button class="btn-secondary" id="exportCSV"><i class="fas fa-download"></i> Export CSV</button>
+                </div>
+                <div class="reports-grid">
+                    <div class="report-card">
+                        <h3>Today's Sales</h3>
+                        <div class="metric" id="todaySales">$0.00</div>
+                    </div>
+                    <div class="report-card">
+                        <h3>Transactions</h3>
+                        <div class="metric" id="transactionCount">0</div>
+                    </div>
+                    <div class="report-card">
+                        <h3>Top Products</h3>
+                        <div id="topProducts"></div>
+                    </div>
+                </div>
+                <div class="recent-sales">
+                    <div class="sales-controls">
+                        <h3>Transaction History</h3>
+                        <div class="search-filters">
+                            <div class="filter-group">
+                                <input type="text" id="transactionSearch" placeholder="Search by customer or invoice ID...">
+                                <select id="dateFilter">
+                                    <option value="all">All Time</option>
+                                    <option value="today">Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="custom">Custom Range</option>
+                                </select>
+                            </div>
+                            <div class="date-range" id="dateRangePicker" style="display: none;">
+                                <input type="date" id="startDate">
+                                <span>to</span>
+                                <input type="date" id="endDate">
+                                <button class="btn-secondary" id="applyDateFilter">Apply</button>
+                            </div>
+                            <div class="bulk-actions">
+                                <button class="btn-secondary" id="exportFiltered">Export Filtered</button>
+                                <button class="btn-secondary" id="printSelected">Print Selected</button>
+                            </div>
+                        </div>
+                    </div>
+                    <table class="sales-table" id="salesTable">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAllTransactions"></th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Customer</th>
+                                <th>Items</th>
+                                <th>Total</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="section">
+                <div class="settings-container">
+                    <h2><i class="fas fa-cog"></i> Shop Settings</h2>
+                    <div class="settings-grid">
+                        <div class="settings-card">
+                            <h3><i class="fas fa-store"></i> Shop Information</h3>
+                            <form id="shopSettingsForm" class="settings-form">
+                                <div class="form-group">
+                                    <label for="shopName">Shop Name *</label>
+                                    <input type="text" id="shopName" placeholder="Enter shop name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="shopAddress">Address</label>
+                                    <textarea id="shopAddress" placeholder="Enter shop address" rows="3"></textarea>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="shopPhone">Phone Number</label>
+                                        <input type="tel" id="shopPhone" placeholder="Enter phone number">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="shopEmail">Email</label>
+                                        <input type="email" id="shopEmail" placeholder="Enter email address">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="shopGST">GST Number</label>
+                                        <input type="text" id="shopGST" placeholder="Enter GST number">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="shopLogo">Logo URL</label>
+                                        <input type="url" id="shopLogo" placeholder="Enter logo image URL">
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn-primary">Save Settings</button>
+                                    <button type="button" class="btn-secondary" id="resetSettings">Reset to Default</button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <div class="settings-card">
+                            <h3><i class="fas fa-receipt"></i> Invoice Settings</h3>
+                            <form id="invoiceSettingsForm" class="settings-form">
+                                <div class="form-group">
+                                    <label for="invoicePrefix">Invoice Prefix</label>
+                                    <input type="text" id="invoicePrefix" placeholder="INV" value="INV">
+                                </div>
+                                <div class="form-group">
+                                    <label for="invoiceFooter">Invoice Footer Text</label>
+                                    <textarea id="invoiceFooter" placeholder="Thank you for your business!" rows="2"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="showLogoOnInvoice" checked>
+                                        Show logo on invoice
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="showGSTOnInvoice" checked>
+                                        Show GST number on invoice
+                                    </label>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn-primary">Save Invoice Settings</button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <div class="settings-card">
+                            <h3><i class="fas fa-palette"></i> Appearance</h3>
+                            <form id="appearanceSettingsForm" class="settings-form">
+                                <div class="form-group">
+                                    <label for="primaryColor">Primary Color</label>
+                                    <input type="color" id="primaryColor" value="#667eea">
+                                </div>
+                                <div class="form-group">
+                                    <label for="secondaryColor">Secondary Color</label>
+                                    <input type="color" id="secondaryColor" value="#764ba2">
+                                </div>
+                                <div class="form-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="enableAnimations" checked>
+                                        Enable animations
+                                    </label>
+                                </div>
+                                <div class="form-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="compactMode" checked>
+                                        Compact mode
+                                    </label>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn-primary">Save Appearance</button>
+                                    <button type="button" class="btn-secondary" id="resetAppearance">Reset Colors</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Customers Section -->
+            <section id="customers" class="section">
+                <div class="customers-container">
+                    <div class="customers-header">
+                        <h2><i class="fas fa-users"></i> Customer Management</h2>
+                        <div class="customer-stats">
+                            <div class="stat-card">
+                                <div class="stat-icon"><i class="fas fa-user-friends"></i></div>
+                                <div class="stat-content">
+                                    <h4>Total Customers</h4>
+                                    <div class="stat-value" id="totalCustomers">0</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon"><i class="fas fa-calendar-alt"></i></div>
+                                <div class="stat-content">
+                                    <h4>This Month</h4>
+                                    <div class="stat-value" id="newCustomersThisMonth">0</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon"><i class="fas fa-star"></i></div>
+                                <div class="stat-content">
+                                    <h4>Top Customer</h4>
+                                    <div class="stat-value" id="topCustomer">None</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="customer-search">
+                        <input type="text" id="customerSearch" placeholder="Search customers by name or phone...">
+                        <button class="btn-secondary" id="exportCustomers">Export Customers</button>
+                    </div>
+
+                    <div class="customers-table-container">
+                        <table class="customers-table" id="customersTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Total Orders</th>
+                                    <th>Total Spent</th>
+                                    <th>Last Visit</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customersBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Forecast Section -->
+            <section id="forecast" class="section">
+                <div class="forecast-container">
+                    <h2><i class="fas fa-chart-line"></i> Inventory Forecasting</h2>
+                    
+                    <div class="forecast-grid">
+                        <div class="forecast-card">
+                            <h3><i class="fas fa-exclamation-triangle"></i> Stock Alerts</h3>
+                            <div id="stockAlertsList" class="alerts-list">
+                                <p class="empty-state">No stock alerts</p>
+                            </div>
+                        </div>
+                        
+                        <div class="forecast-card">
+                            <h3><i class="fas fa-shopping-cart"></i> Reorder Recommendations</h3>
+                            <div id="reorderList" class="alerts-list">
+                                <p class="empty-state">No reorder recommendations</p>
+                            </div>
+                        </div>
+                        
+                        <div class="forecast-card">
+                            <h3><i class="fas fa-trending-up"></i> Sales Trends</h3>
+                            <div id="salesTrends">
+                                <canvas id="trendsChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="forecast-card">
+                            <h3><i class="fas fa-calculator"></i> Demand Prediction</h3>
+                            <div id="demandPrediction">
+                                <p class="empty-state">Analyzing sales data...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="forecast-actions">
+                        <button class="btn-primary" id="runForecastBtn">Run Forecast Analysis</button>
+                        <button class="btn-secondary" id="exportForecastBtn">Export Forecast Report</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Users Section -->
+            <section id="users" class="section">
+                <div class="users-container">
+                    <div class="users-header">
+                        <h2><i class="fas fa-user-cog"></i> User Management</h2>
+                        <button class="btn-primary" id="addUserBtn">Add New User</button>
+                    </div>
+                    
+                    <div class="users-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-users"></i></div>
+                            <div class="stat-content">
+                                <h4>Total Users</h4>
+                                <div class="stat-value" id="totalUsers">0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-user-shield"></i></div>
+                            <div class="stat-content">
+                                <h4>Active Users</h4>
+                                <div class="stat-value" id="activeUsers">0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-user-tie"></i></div>
+                            <div class="stat-content">
+                                <h4>Administrators</h4>
+                                <div class="stat-value" id="adminUsers">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="users-table-container">
+                        <table class="users-table" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Username</th>
+                                    <th>Role</th>
+                                    <th>Email</th>
+                                    <th>Last Login</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content login-modal">
+            <h2><i class="fas fa-sign-in-alt"></i> Login to POS</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" placeholder="Enter username" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter password" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Login</button>
+                    <button type="button" class="btn-secondary" id="createAccountBtn">Create Account</button>
+                </div>
+            </form>
+            <div id="loginMessage" class="message"></div>
+        </div>
+    </div>
+
+    <!-- User Management Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="userModalTitle">Add User</h2>
+            <form id="userForm">
+                <div class="form-group">
+                    <label for="userName">Full Name</label>
+                    <input type="text" id="userName" placeholder="Enter full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="userUsername">Username</label>
+                    <input type="text" id="userUsername" placeholder="Enter username" required>
+                </div>
+                <div class="form-group">
+                    <label for="userPassword">Password</label>
+                    <input type="password" id="userPassword" placeholder="Enter password" required>
+                </div>
+                <div class="form-group">
+                    <label for="userRole">Role</label>
+                    <select id="userRole" required>
+                        <option value="cashier">Cashier</option>
+                        <option value="manager">Manager</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="userEmail">Email (Optional)</label>
+                    <input type="email" id="userEmail" placeholder="Enter email">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save User</button>
+                    <button type="button" class="btn-secondary" id="cancelUserBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Inventory Forecast Modal -->
+    <div id="forecastModal" class="modal">
+        <div class="modal-content large-modal">
+            <span class="close">&times;</span>
+            <h2><i class="fas fa-chart-line"></i> Inventory Forecast</h2>
+            <div id="forecastContent">
+                <div class="forecast-summary">
+                    <div class="forecast-card">
+                        <h3>Low Stock Alerts</h3>
+                        <div id="lowStockAlerts"></div>
+                    </div>
+                    <div class="forecast-card">
+                        <h3>Reorder Suggestions</h3>
+                        <div id="reorderSuggestions"></div>
+                    </div>
+                </div>
+                <div class="forecast-details">
+                    <h3>Demand Predictions</h3>
+                    <div id="demandPredictions"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- External Services Modal -->
+    <div id="servicesModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2><i class="fas fa-plug"></i> External Services</h2>
+            <form id="servicesForm" class="settings-form">
+                <div class="service-section">
+                    <h3><i class="fas fa-envelope"></i> Email Notifications</h3>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="emailEnabled">
+                            Enable email notifications
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="emailService">Email Service</label>
+                        <select id="emailService">
+                            <option value="gmail">Gmail</option>
+                            <option value="outlook">Outlook</option>
+                            <option value="smtp">Custom SMTP</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="emailAddress">Email Address</label>
+                        <input type="email" id="emailAddress" placeholder="your@email.com">
+                    </div>
+                </div>
+
+                <div class="service-section">
+                    <h3><i class="fas fa-sms"></i> SMS Notifications</h3>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="smsEnabled">
+                            Enable SMS notifications
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="smsProvider">SMS Provider</label>
+                        <select id="smsProvider">
+                            <option value="twilio">Twilio</option>
+                            <option value="aws">AWS SNS</option>
+                            <option value="custom">Custom API</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="service-section">
+                    <h3><i class="fas fa-cloud"></i> Cloud Backup</h3>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="cloudBackupEnabled">
+                            Enable automatic cloud backup
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="backupFrequency">Backup Frequency</label>
+                        <select id="backupFrequency">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="manual">Manual Only</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn-secondary" id="backupNowBtn">Backup Now</button>
+                </div>
+
+                <div class="service-section">
+                    <h3><i class="fas fa-barcode"></i> Barcode Scanner</h3>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="barcodeScannerEnabled">
+                            Enable barcode scanning
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="cameraDevice">Camera Device</label>
+                        <select id="cameraDevice">
+                            <option value="rear">Rear Camera</option>
+                            <option value="front">Front Camera</option>
+                            <option value="auto">Auto-detect</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn-secondary" id="testScannerBtn">Test Scanner</button>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalTitle">Add Product</h2>
+            <form id="productForm">
+                <div class="form-group">
+                    <label for="productName">Product Name:</label>
+                    <input type="text" id="productName" required>
+                </div>
+                <div class="form-group">
+                    <label for="productCategory">Category:</label>
+                    <select id="productCategory" required>
+                        <option value="">Select Category</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Clothing">Clothing</option>
+                        <option value="Food">Food</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="productPrice">Price:</label>
+                    <input type="number" id="productPrice" step="0.01" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="productStock">Stock Quantity:</label>
+                    <input type="number" id="productStock" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="productBarcode">Barcode/SKU:</label>
+                    <input type="text" id="productBarcode">
+                </div>
+                <div class="form-group">
+                    <label for="productDescription">Description:</label>
+                    <textarea id="productDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="productQuickKey">Quick Key (1-9):</label>
+                    <input type="number" id="productQuickKey" min="1" max="9">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Product</button>
+                    <button type="button" class="btn-secondary" id="cancelBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Customer Modal -->
+    <div id="customerModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Add Customer</h2>
+            <form id="customerForm">
+                <div class="form-group">
+                    <label for="newCustomerName">Name:</label>
+                    <input type="text" id="newCustomerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="newCustomerPhone">Phone:</label>
+                    <input type="text" id="newCustomerPhone" required>
+                </div>
+                <div class="form-group">
+                    <label for="newCustomerEmail">Email:</label>
+                    <input type="email" id="newCustomerEmail">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Customer</button>
+                    <button type="button" class="btn-secondary" id="cancelCustomerBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Invoice Modal -->
+    <div id="invoiceModal" class="modal">
+        <div class="modal-content invoice-content">
+            <span class="close">&times;</span>
+            <div id="invoiceContent"></div>
+            <div class="invoice-actions">
+                <button class="btn-primary" id="printInvoice">Print Invoice</button>
+                <button class="btn-secondary" id="closeInvoice">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
